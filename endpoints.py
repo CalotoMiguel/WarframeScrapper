@@ -6,7 +6,7 @@ def get_endpoints():
     with open("index_en.txt.lzma", "wb") as f:
         f.write(data)
     import subprocess
-    index = subprocess.getoutput("lzma -d index_en.txt.lzma -c; rm index_en.txt.lzma")
+    index = subprocess.getoutput("xz --format=lzma -d index_en.txt.lzma -c; rm index_en.txt.lzma")
 
 
     endpoints = {}
