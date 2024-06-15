@@ -12,16 +12,14 @@ from warframe import Warframe
 import responsesBot
 
 TOKEN = os.getenv('DISCORD_TOKEN')
+GUILD = None
 if os.getenv('GUILD_ID') is not None:
-    GUILD_ID = int(os.getenv('GUILD_ID'))
+    GUILD = discord.Object(id=int(os.getenv('GUILD_ID')))
 
 from viewsBot import *
 import discord
 from discord.ext import tasks
 from discord import app_commands
-
-
-guild = discord.Object(id=GUILD_ID)
 
 
 class MyClient(discord.Client):
@@ -41,8 +39,9 @@ class MyClient(discord.Client):
         self.add_view(SubscriptionsView())
         self.add_view(BaroView())
         self.add_view(WorldTimersView())
-        self.tree.copy_global_to(guild=guild)
-        await self.tree.sync(guild=guild)
+        if GUILD is not None:
+            self.tree.copy_global_to(guild=GUILD)
+        await self.tree.sync(guild=GUILD)
         self.check_fisures.start()
         self.update_weapon_names.start()
         self.update_mod_names.start()
@@ -113,7 +112,7 @@ async def weapon_autocomplete(interaction: discord.Interaction, current: str) ->
     ][:25]
 
 
-@client.tree.command(name="weaponinfo", description="Fetch the information of a weapon", guild=guild)
+@client.tree.command(name="weaponinfo", description="Fetch the information of a weapon", guild=GUILD)
 @app_commands.autocomplete(weapon=weapon_autocomplete)
 async def weaponinfo(interaction: discord.Interaction, weapon: str):
     await interaction.response.defer(thinking=True)
@@ -123,7 +122,7 @@ async def weaponinfo(interaction: discord.Interaction, weapon: str):
     )
 
 
-@client.tree.command(name="weaponacquisition", description="Fetch the acquisition of a weapon", guild=guild)
+@client.tree.command(name="weaponacquisition", description="Fetch the acquisition of a weapon", guild=GUILD)
 @app_commands.autocomplete(weapon=weapon_autocomplete)
 async def weaponacquisition(interaction: discord.Interaction, weapon: str):
     await interaction.response.defer(thinking=True)
@@ -133,7 +132,7 @@ async def weaponacquisition(interaction: discord.Interaction, weapon: str):
     )
 
 
-@client.tree.command(name="rivencalculator", description="Calculator for riven of a weapon", guild=guild)
+@client.tree.command(name="rivencalculator", description="Calculator for riven of a weapon", guild=GUILD)
 @app_commands.autocomplete(weapon=weapon_autocomplete)
 async def rivencalculator(interaction: discord.Interaction, weapon: str):
     await interaction.response.defer(thinking=True)
@@ -146,7 +145,7 @@ async def rivencalculator(interaction: discord.Interaction, weapon: str):
     )
 
 
-@client.tree.command(name="fisures", description="Fetch the active fisures", guild=guild)
+@client.tree.command(name="fisures", description="Fetch the active fisures", guild=GUILD)
 async def fisures(interaction: discord.Interaction, selectmissions: Literal["All", "None"] = "All"):
     await interaction.response.defer(thinking=True)
     await interaction.followup.send(
@@ -155,7 +154,7 @@ async def fisures(interaction: discord.Interaction, selectmissions: Literal["All
     )
 
 
-@client.tree.command(name="managesubscriptions", description="Manage subscriptions", guild=guild)
+@client.tree.command(name="managesubscriptions", description="Manage subscriptions", guild=GUILD)
 async def managesubscriptions(interaction: discord.Interaction):
     await interaction.response.defer(thinking=True, ephemeral=True)
     subscriptions = WarframeDB.get_reliq_by_user(interaction.user.id)
@@ -168,7 +167,7 @@ async def managesubscriptions(interaction: discord.Interaction):
     )
 
 
-@client.tree.command(name="baro", description="Baro Ki'Teer Offerings", guild=guild)
+@client.tree.command(name="baro", description="Baro Ki'Teer Offerings", guild=GUILD)
 async def baro(interaction: discord.Interaction):
     await interaction.response.defer(thinking=True)
     await interaction.followup.send(
@@ -186,7 +185,7 @@ async def mod_autocomplete(interaction: discord.Interaction, current: str) -> Li
     ][:25]
 
 
-@client.tree.command(name="mod", description="Fetch the information of a mod", guild=guild)
+@client.tree.command(name="mod", description="Fetch the information of a mod", guild=GUILD)
 @app_commands.autocomplete(mod=mod_autocomplete)
 async def mod(interaction: discord.Interaction, mod: str):
     await interaction.response.defer(thinking=True)
@@ -195,7 +194,7 @@ async def mod(interaction: discord.Interaction, mod: str):
     )
 
 
-@client.tree.command(name="wordtimers", description="Show the local times of open worlds", guild=guild)
+@client.tree.command(name="wordtimers", description="Show the local times of open worlds", guild=GUILD)
 async def wordtimers(interaction: discord.Interaction):
     await interaction.response.defer(thinking=True)
     await interaction.followup.send(
