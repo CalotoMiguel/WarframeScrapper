@@ -12,7 +12,8 @@ from warframe import Warframe
 import responsesBot
 
 TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD_ID = int(os.getenv('GUILD_ID'))
+if os.getenv('GUILD_ID') is not None:
+    GUILD_ID = int(os.getenv('GUILD_ID'))
 
 from viewsBot import *
 import discord
