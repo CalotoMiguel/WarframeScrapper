@@ -10,16 +10,13 @@ from PIL import Image, ImageDraw
 
 class Warframe:
     @staticmethod
-    def getImage(uniqueName: str, session: requests.Session = None) -> io.BytesIO:
+    def getImage(uniqueName: str, session: requests.Session = None, manifest: List[Dict] = None) -> io.BytesIO:
         if session is None:
             session = requests.Session()
-        endpoint = WarframeDB.get_endpoint("ExportManifest")
         url = 'https://content.warframe.com/PublicExport/'
-        response = session.get(url + endpoint)
-        response = json.loads(response.content, strict=False)
-        URLImage = next(filter(lambda a : a["uniqueName"] == uniqueName, response["Manifest"]), None)
-        response2 = session.get(url[:-1] + URLImage["textureLocation"], stream=True)
-        return io.BytesIO(response2.raw.read())
+        URLImage = WarframeDB.get_location(uniqueName)
+        response = session.get(url[:-1] + URLImage, stream=True)
+        return io.BytesIO(response.raw.read())
 
     @staticmethod
     def getWeapons() -> List[Dict]:
@@ -29,13 +26,19 @@ class Warframe:
         return json.loads(response.content, strict=False)["ExportWeapons"]
 
     @staticmethod
+    def getManifest() -> List[Dict]:
+        endpoint = WarframeDB.get_endpoint("ExportManifest")
+        url = 'https://content.warframe.com/PublicExport/'
+        response = requests.get(url + endpoint)
+        return json.loads(response.content, strict=False)["Manifest"]
+
+    @staticmethod
     def getWeaponNames() -> List[str]:
         endpoint = WarframeDB.get_endpoint("ExportWeapons_en")
         url = 'https://content.warframe.com/PublicExport/'
         response = requests.get(url + endpoint)
         response = json.loads(response.content, strict=False)
         return list(map(lambda a : a["name"], response["ExportWeapons"]))
-    
     
     @staticmethod
     def getWeaponByName(name: str) -> Optional[Dict]:

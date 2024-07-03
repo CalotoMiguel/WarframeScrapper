@@ -27,6 +27,7 @@ class MyClient(discord.Client):
         super().__init__(intents=discord.Intents.all())
         self.tree = app_commands.CommandTree(self)
         WarframeDB.refresh_endpoints(get_endpoints())
+        WarframeDB.refresh_manifest(Warframe.getManifest())
         self.weapons = Warframe.getWeaponNames()
         self.mods = Warframe.getModNames()
         WarframeDB.refresh_unique_names(Warframe.getWeapons(), Warframe.getResources())
@@ -100,6 +101,14 @@ class MyClient(discord.Client):
 
     @refresh_endpoints.before_loop
     async def before_refresh_endpoints(self):
+        await self.wait_until_ready()
+
+    @tasks.loop(minutes=10)
+    async def refresh_manifest(self):
+        WarframeDB.refresh_manifest(Warframe.getManifest())
+
+    @refresh_manifest.before_loop
+    async def before_refresh_manifest(self):
         await self.wait_until_ready()
 
 client = MyClient()

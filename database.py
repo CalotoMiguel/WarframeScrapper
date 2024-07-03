@@ -35,6 +35,7 @@ class WarframeDB:
         cursor.execute("CREATE TABLE IF NOT EXISTS SUBRELIQ (id INT AUTO_INCREMENT PRIMARY KEY, discordId BIGINT UNSIGNED, filters BIGINT UNSIGNED ZEROFILL, time BIGINT UNSIGNED)")
         cursor.execute("CREATE TABLE IF NOT EXISTS UNIQUENAMES (uniqueName varchar(255) PRIMARY KEY, name varchar(255))")
         cursor.execute("CREATE TABLE IF NOT EXISTS ENDPOINTS (endpoint varchar(255) PRIMARY KEY, location varchar(255))")
+        cursor.execute("CREATE TABLE IF NOT EXISTS MANIFEST (uniqueName varchar(255) PRIMARY KEY, location varchar(255))")
     
     @staticmethod
     @create_cursor
@@ -53,6 +54,19 @@ class WarframeDB:
         cursor.execute("DELETE FROM ENDPOINTS")
         sql = "INSERT INTO ENDPOINTS (endpoint, location) VALUES (%s, %s)"
         cursor.executemany(sql, list(endpoints.items()))
+    
+    @staticmethod
+    @create_cursor
+    def refresh_manifest(manifest: List[Dict], cursor):
+        cursor.execute("DELETE FROM MANIFEST")
+        sql = "INSERT INTO MANIFEST (uniqueName, location) VALUES (%s, %s)"
+        cursor.executemany(sql, [(item["uniqueName"], item["textureLocation"]) for item in manifest])
+    
+    @staticmethod
+    @create_cursor
+    def get_location(unique: str, cursor) -> str:
+        cursor.execute(f"SELECT location FROM MANIFEST WHERE uniqueName = '{unique}'")
+        return cursor.fetchone()[0]
     
     @staticmethod
     @create_cursor

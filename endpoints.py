@@ -20,6 +20,3 @@ if __name__ == "__main__":
     import json
     endpoints = get_endpoints()
     print(json.dumps(endpoints, indent=2))
-    for endpoint in endpoints:
-        with open(f"{endpoint}.json", "wb") as f:
-            f.write(requests.get(f'http://content.warframe.com/PublicExport/{endpoints[endpoint]}').content)
