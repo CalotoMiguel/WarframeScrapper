@@ -64,23 +64,23 @@ class WeaponView(discord.ui.View):
 class RivensView(WeaponView):
     def __init__(self, button: int = 0):
         super().__init__()
-        self.update_riven(True, False, 8)
+        self.update_riven(True, False, '8')
 
     def update_buttons(self, button: int):
         self.weapon_info_button.disabled = False
         self.weapon_acquisition_button.disabled = False
         self.riven_calculator_button.disabled = True
     
-    def get_has2bonuses(self, interaction: discord.Interaction) -> List[str]:
+    def get_has2bonuses(self, interaction: discord.Interaction) -> bool:
         return interaction.message.components[0].children[0].disabled
     
-    def get_hascurse(self, interaction: discord.Interaction) -> List[str]:
+    def get_hascurse(self, interaction: discord.Interaction) -> bool:
         return interaction.message.components[0].children[2].disabled
 
-    def get_lvl(self, interaction: discord.Interaction) -> List[str]:
-        return int([option.value for option in interaction.message.components[1].children[0].options if option.default == True][0])
+    def get_lvl(self, interaction: discord.Interaction) -> str:
+        return [option.value for option in interaction.message.components[1].children[0].options if option.default == True][0]
     
-    def update_riven(self, has2bonus: bool, hascurse: bool, lvl: int):
+    def update_riven(self, has2bonus: bool, hascurse: bool, lvl: str):
         for option in self.riven_lvl_select.options:
             option.default = option.value == lvl
         self.riven_2bonuses_button.disabled = has2bonus
@@ -106,7 +106,7 @@ class RivensView(WeaponView):
                 True,
                 True,
                 self.get_hascurse(interaction),
-                self.get_lvl(interaction)
+                int(self.get_lvl(interaction))
             ),
             view = self
         )
@@ -126,7 +126,7 @@ class RivensView(WeaponView):
                 True,
                 False,
                 self.get_hascurse(interaction),
-                self.get_lvl(interaction)
+                int(self.get_lvl(interaction))
             ),
             view = self
         )
@@ -146,7 +146,7 @@ class RivensView(WeaponView):
                 True,
                 self.get_has2bonuses(interaction),
                 True,
-                self.get_lvl(interaction)
+                int(self.get_lvl(interaction))
             ),
             view = self
         )
@@ -166,7 +166,7 @@ class RivensView(WeaponView):
                 True,
                 self.get_has2bonuses(interaction),
                 False,
-                self.get_lvl(interaction)
+                int(self.get_lvl(interaction))
             ),
             view = self
         )
@@ -180,7 +180,7 @@ class RivensView(WeaponView):
         self.update_riven(
             self.get_has2bonuses(interaction),
             self.get_hascurse(interaction),
-            int(select.values[0])
+            select.values[0]
         )
         await interaction.message.edit(
             **responsesBot.message_riven_calculator(
@@ -196,20 +196,29 @@ class RivensView(WeaponView):
         await interaction.response.defer()
 
 class FisuresView(discord.ui.View):
-    def __init__(self, preselect_missions = False):
+    def __init__(self):
         super().__init__(timeout=None)
-        self.update_selects(None, None, None, None, preselect_missions)
+        self.update_selects(None, None, None, None)
     
-    def get_values_from_interaction(self, interaction: discord.Interaction, row: int) -> List[str]:
-        return [option.value for option in interaction.message.components[row].children[0].options if option.default == True]
+    def get_values_from_interaction(self, interaction: discord.Interaction, row: int) -> Dict[str, List]:
+        returned = {}
+        if row != 0:
+            returned["select_relics"] = [option.value for option in interaction.message.components[0].children[0].options if option.default == True]
+        if row != 1:
+            returned["select_factions"] = [option.value for option in interaction.message.components[1].children[0].options if option.default == True]
+        if row != 2:
+            returned["select_missions"] = [option.value for option in interaction.message.components[2].children[0].options if option.default == True]
+        if row != 3:
+            returned["select_sp"] = [option.value for option in interaction.message.components[3].children[0].options if option.default == True]
+        return returned
 
-    def update_selects(self, select_relics, select_factions, select_missions, select_sp, preselect_missions = False):
+    def update_selects(self, select_relics, select_factions, select_missions, select_sp):
         for option in self.faction_types_fisures_select.options:
             option.default = True if select_factions == None else str(option.value) in select_factions
         for option in self.relic_types_fisures_select.options:
             option.default = True if select_relics == None else str(option.value) in select_relics
         for option in self.mission_types_fisures_select.options:
-            option.default = preselect_missions if select_relics == None else str(option.value) in select_missions
+            option.default = True if select_relics == None else str(option.value) in select_missions
         for option in self.sp_fisures_select.options:
             option.default = True if select_sp == None else str(option.value) in select_sp
         
@@ -221,17 +230,13 @@ class FisuresView(discord.ui.View):
     async def relic_types_fisures_select(self, interaction: discord.Interaction, select: discord.ui.Select):
         self.update_selects(
             select_relics=select.values,
-            select_factions=self.get_values_from_interaction(interaction, 1),
-            select_missions=self.get_values_from_interaction(interaction, 2),
-            select_sp=self.get_values_from_interaction(interaction, 3)
+            **self.get_values_from_interaction(interaction, 0)
         )
         await interaction.message.edit(
             **responsesBot.message_fisures(
                 interaction.created_at,
                 select_relics=select.values,
-                select_factions=self.get_values_from_interaction(interaction, 1),
-                select_missions=self.get_values_from_interaction(interaction, 2),
-                select_sp=self.get_values_from_interaction(interaction, 3)),
+                **self.get_values_from_interaction(interaction, 0)),
             view = self
         )
         await interaction.response.defer()
@@ -242,18 +247,14 @@ class FisuresView(discord.ui.View):
     @discord.ui.select(custom_id="faction-types-fisures-select", min_values=1, max_values=len(faction_type_options), options=faction_type_options, row=1)
     async def faction_types_fisures_select(self, interaction: discord.Interaction, select: discord.ui.Select):
         self.update_selects(
-            select_relics=self.get_values_from_interaction(interaction, 0),
             select_factions=select.values,
-            select_missions=self.get_values_from_interaction(interaction, 2),
-            select_sp=self.get_values_from_interaction(interaction, 3)
+            **self.get_values_from_interaction(interaction, 1)
         )
         await interaction.message.edit(
             **responsesBot.message_fisures(
                 interaction.created_at,
-                select_relics=self.get_values_from_interaction(interaction, 0),
                 select_factions=select.values,
-                select_missions=self.get_values_from_interaction(interaction, 2),
-                select_sp=self.get_values_from_interaction(interaction, 3)),
+                **self.get_values_from_interaction(interaction, 1)),
             view = self
         )
         await interaction.response.defer()
@@ -264,55 +265,47 @@ class FisuresView(discord.ui.View):
     @discord.ui.select(custom_id="mission-types-fisures-select", min_values=1, max_values=len(mission_type_options), options=mission_type_options, row=2)
     async def mission_types_fisures_select(self, interaction: discord.Interaction, select: discord.ui.Select):
         self.update_selects(
-            select_relics=self.get_values_from_interaction(interaction, 0),
-            select_factions=self.get_values_from_interaction(interaction, 1),
             select_missions=select.values,
-            select_sp=self.get_values_from_interaction(interaction, 3)
+            **self.get_values_from_interaction(interaction, 2)
         )
         await interaction.message.edit(
             **responsesBot.message_fisures(
                 interaction.created_at,
-                select_relics=self.get_values_from_interaction(interaction, 0),
-                select_factions=self.get_values_from_interaction(interaction, 1),
                 select_missions=select.values,
-                select_sp=self.get_values_from_interaction(interaction, 3)),
+                **self.get_values_from_interaction(interaction, 2)),
             view = self
         )
         await interaction.response.defer()
 
     sp_options=[
-            discord.SelectOption(label="Steel Path", value=True, default=True),
-            discord.SelectOption(label="Normal", value=False, default=True)
+            discord.SelectOption(label="Steel Path", value='True', default=True),
+            discord.SelectOption(label="Normal", value='False', default=True)
         ]
     
     @discord.ui.select(custom_id="sp-fisures-select", min_values=1, max_values=len(sp_options), options=sp_options, row=3)
     async def sp_fisures_select(self, interaction: discord.Interaction, select: discord.ui.Select):
         self.update_selects(
-            select_relics=self.get_values_from_interaction(interaction, 0),
-            select_factions=self.get_values_from_interaction(interaction, 1),
-            select_missions=self.get_values_from_interaction(interaction, 2),
-            select_sp=select.values
+            select_sp=select.values,
+            **self.get_values_from_interaction(interaction, 3)
         )
         await interaction.message.edit(
             **responsesBot.message_fisures(
                 interaction.created_at,
-                select_relics=self.get_values_from_interaction(interaction, 0),
-                select_factions=self.get_values_from_interaction(interaction, 1),
-                select_missions=self.get_values_from_interaction(interaction, 2),
-                select_sp=select.values),
+                select_sp=select.values,
+                **self.get_values_from_interaction(interaction, 3)),
             view = self
         )
         await interaction.response.defer()
 
     @discord.ui.button(label="⟳ Reload", custom_id="reload-fisures-button", style=discord.ButtonStyle.success, row=4)
     async def reload_fisures_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.update_selects(
+            **self.get_values_from_interaction(interaction, -1)
+        )
         await interaction.message.edit(
             **responsesBot.message_fisures(
                 interaction.created_at,
-                select_relics=self.get_values_from_interaction(interaction, 0),
-                select_factions=self.get_values_from_interaction(interaction, 1),
-                select_missions=self.get_values_from_interaction(interaction, 2),
-                select_sp=self.get_values_from_interaction(interaction, 3)),
+                **self.get_values_from_interaction(interaction, -1)),
             view = self
         )
         await interaction.response.defer()
@@ -320,15 +313,39 @@ class FisuresView(discord.ui.View):
     @discord.ui.button(label="Subscribe", custom_id="subscribe-fisures-button", style=discord.ButtonStyle.success, row=4)
     async def subscribe_fisures_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         filter = ConverterDB.convert_to_dbfilter(
-            self.get_values_from_interaction(interaction, 0),
-            self.get_values_from_interaction(interaction, 1),
-            self.get_values_from_interaction(interaction, 2),
-            self.get_values_from_interaction(interaction, 3)
+            **self.get_values_from_interaction(interaction, -1)
         )
         await interaction.response.send_message(
             **responsesBot.message_subscribe_fisures(interaction.user.id, filter),
             ephemeral=True
         )
+
+    @discord.ui.button(label="Select All", custom_id="select-fisures-button", style=discord.ButtonStyle.primary, row=4)
+    async def select_fisures_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.update_selects(None, None, None, None)
+        await interaction.message.edit(
+            **responsesBot.message_fisures(interaction.created_at),
+            view = self
+        )
+        await interaction.response.defer()
+
+    @discord.ui.button(label="Unselect All", custom_id="unselect-fisures-button", style=discord.ButtonStyle.danger, row=4)
+    async def unselect_fisures_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.update_selects(
+            [self.relic_types_fisures_select.options[0].value],
+            [self.faction_types_fisures_select.options[0].value],
+            [self.mission_types_fisures_select.options[0].value],
+            [self.sp_fisures_select.options[0].value])
+        await interaction.message.edit(
+            **responsesBot.message_fisures(
+                interaction.created_at,
+                select_relics=[self.relic_types_fisures_select.options[0].value],
+                select_factions=[self.faction_types_fisures_select.options[0].value],
+                select_missions=[self.mission_types_fisures_select.options[0].value],
+                select_sp=[self.sp_fisures_select.options[0].value]),
+            view = self
+        )
+        await interaction.response.defer()
 
 class DeleteSubscriptionView(discord.ui.View):
     def __init__(self):

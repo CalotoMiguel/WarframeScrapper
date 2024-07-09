@@ -61,8 +61,12 @@ class MissionTypes():
         return next(filter(lambda x : x[2] == internal, MissionTypes.get()), None)[1]
     
     @staticmethod
-    def get_id_by_list_internal(internal: List[str]) -> List[int]:
+    def get_ids_by_list_internal(internal: List[str]) -> List[int]:
         return map(lambda x : x[0], filter(lambda x : x[2] in internal, MissionTypes.get()))
+    
+    @staticmethod
+    def get_list_names_by_ids(ids: List[int]) -> List[str]:
+        return map(lambda x : x[1], filter(lambda x : x[0] in ids, MissionTypes.get()))
     
 class DamageTypes():
     @staticmethod
@@ -115,8 +119,12 @@ class RelicTypes():
         return next(filter(lambda x : x[2] == internal, RelicTypes.get()), None)[1]
     
     @staticmethod
-    def get_id_by_list_internal(internal: List[str]) -> List[int]:
+    def get_ids_by_list_internal(internal: List[str]) -> List[int]:
         return map(lambda x : x[0], filter(lambda x : x[2] in internal, RelicTypes.get()))
+    
+    @staticmethod
+    def get_list_names_by_ids(ids: List[int]) -> List[str]:
+        return map(lambda x : x[1], filter(lambda x : x[0] in ids, RelicTypes.get()))
     
 class FactionTypes():
     @staticmethod
@@ -134,8 +142,12 @@ class FactionTypes():
         return next(filter(lambda x : x[0] == index, FactionTypes.get()), None)[1]
     
     @staticmethod
-    def get_id_by_list_internal(internal: List[str]) -> List[int]:
+    def get_ids_by_list_internal(internal: List[str]) -> List[int]:
         return map(lambda x : x[0], filter(lambda x : x[1] in internal, FactionTypes.get()))
+    
+    @staticmethod
+    def get_list_names_by_ids(ids: List[int]) -> List[str]:
+        return map(lambda x : x[1], filter(lambda x : x[0] in ids, FactionTypes.get()))
     
     
 class PolarityTypes():
@@ -163,12 +175,20 @@ class PolarityTypes():
         return next(filter(lambda x : x[0] == internal, PolarityTypes.get()), None)[1]
     
 class ConverterDB:
-    
     @staticmethod
-    def convert_to_dbfilter(reliq: List[str], faction: List[str], mission: List[str], sp: List[str]) -> int:
+    def convert_to_dbfilter(select_relics: List[str], select_factions: List[str], select_missions: List[str], select_sp: List[str]) -> int:
         return WarframeDB.get_filter_number(
-            set(RelicTypes.get_id_by_list_internal(reliq)) |
-            set(map(lambda x : x + 10, FactionTypes.get_id_by_list_internal(faction))) |
-            set(map(lambda x : x + 20, MissionTypes.get_id_by_list_internal(mission))) |
-            set(map(lambda x : bool(x) + 60, sp))
+            set(RelicTypes.get_ids_by_list_internal(select_relics)) |
+            set(map(lambda x : x + 10, FactionTypes.get_ids_by_list_internal(select_factions))) |
+            set(map(lambda x : x + 20, MissionTypes.get_ids_by_list_internal(select_missions))) |
+            set(map(lambda x : (x == 'True') + 60, select_sp))
         )
+    
+    def convert_from_dbfilter(filter: int) -> Dict[str, List[str]]:
+        filters = WarframeDB.get_list_from_filter_number(filter)
+        return {
+            "select_relics": RelicTypes.get_list_names_by_ids([i for i in filters if i < 10]),
+            "select_factions": FactionTypes.get_list_names_by_ids([i - 10 for i in filters if 10 <= i < 20]),
+            "select_missions": MissionTypes.get_list_names_by_ids([i - 20 for i in filters if 20 <= i < 60]),
+            "select_sp": ["Normal" if i == 60 else "Steel Path" for i in filters if 60 <= i]
+        }

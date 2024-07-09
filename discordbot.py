@@ -155,11 +155,11 @@ async def rivencalculator(interaction: discord.Interaction, weapon: str):
 
 
 @client.tree.command(name="fisures", description="Fetch the active fisures", guild=GUILD)
-async def fisures(interaction: discord.Interaction, selectmissions: Literal["All", "None"] = "All"):
+async def fisures(interaction: discord.Interaction):
     await interaction.response.defer(thinking=True)
     await interaction.followup.send(
         **responsesBot.message_fisures(timestamp=interaction.created_at),
-        view = FisuresView(selectmissions == "All")
+        view = FisuresView()
     )
 
 
@@ -203,11 +203,11 @@ async def mod(interaction: discord.Interaction, mod: str):
     )
 
 
-@client.tree.command(name="wordtimers", description="Show the local times of open worlds", guild=GUILD)
-async def wordtimers(interaction: discord.Interaction):
+@client.tree.command(name="worldtimers", description="Show the local times of open worlds", guild=GUILD)
+async def worldtimers(interaction: discord.Interaction):
     await interaction.response.defer(thinking=True)
     await interaction.followup.send(
-        **responsesBot.message_word_timers(interaction.created_at),
+        **responsesBot.message_world_timers(interaction.created_at),
         view=WorldTimersView()
     )
 

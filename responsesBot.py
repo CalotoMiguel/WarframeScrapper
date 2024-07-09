@@ -51,6 +51,24 @@ def message_weapon_info(weapon: str, timestamp: datetime.datetime, edit: bool = 
 
     embed.add_field(name="Damage", value=damages)
     embed.add_field(name="Total Damage", value=weaponinfo["totalDamage"])
+    if "multishot" in weaponinfo:
+        embed.add_field(name="Multishot", value=weaponinfo["multishot"])
+    if "masteryReq" in weaponinfo:
+        embed.add_field(name="MR", value=weaponinfo["masteryReq"])
+    if "fireRate" in weaponinfo:
+        embed.add_field(name="Fire Rate", value=weaponinfo["fireRate"])
+    if "range" in weaponinfo:
+        embed.add_field(name="Range", value=weaponinfo["range"])
+    if "comboDuration" in weaponinfo:
+        embed.add_field(name="Combo Duration", value=weaponinfo["comboDuration"])
+    if "criticalChance" in weaponinfo:
+        embed.add_field(name="Critical Chance", value=f'{weaponinfo["criticalChance"] * 100:.0f} %')
+    if "criticalMultiplier" in weaponinfo:
+        embed.add_field(name="Critical Multiplier", value=f'{weaponinfo["criticalMultiplier"]:.1f}')
+    if "procChance" in weaponinfo:
+        embed.add_field(name="Status Chance", value=f'{weaponinfo["procChance"] * 100:.0f} %')
+    if "omegaAttenuation" in weaponinfo:
+        embed.add_field(name="Riven Disposition", value=f'{weaponinfo["omegaAttenuation"]:.2f}')
     files = 'attachments' if edit else 'files'
     return {
         'embed': embed,
@@ -257,7 +275,8 @@ def message_manage_subscriptions(
     )
     flag = True
     for subscription in subscriptions:
-        embed.add_field(name=f"SubscriptionId: {subscription[0]}", value=subscription[2])
+        filters = ConverterDB.convert_from_dbfilter(subscription[2])
+        embed.add_field(name=f"SubscriptionId: {subscription[0]}", value=' | '.join([' | '.join(v) for v in filters.values()]))
         flag = False
     if flag:
         embed.add_field(name="You have not subscribed to any fisure yet", value="")
@@ -275,7 +294,18 @@ def message_delete_subscription(
         timestamp=timestamp
     )
     subscription = WarframeDB.get_reliq_by_id(subscriptionId)
-    embed.add_field(name="\t", value=subscription[2])
+    filters = ConverterDB.convert_from_dbfilter(subscription[2])
+    embed.add_field(name="Relic Types", value=' | '.join(filters["select_relics"]))
+    embed.add_field(name="\t", value="\t")
+    embed.add_field(name="\t", value="\t")
+    embed.add_field(name="Faction Types", value=' | '.join(filters["select_factions"]))
+    embed.add_field(name="\t", value="\t")
+    embed.add_field(name="\t", value="\t")
+    embed.add_field(name="Mission Types", value=' | '.join(filters["select_missions"]))
+    embed.add_field(name="\t", value="\t")
+    embed.add_field(name="\t", value="\t")
+    embed.add_field(name="Difficulty", value=' | '.join(filters["select_sp"]))
+
     return {
         'embed': embed
     }
@@ -322,7 +352,7 @@ def message_baro_weapons(timestamp: datetime.datetime):
         'embed': __get_embed_baro(
             timestamp,
             Warframe.getWeapons(),
-            "Use </weaponinfo:1204522137281363990> to see more info about the weapons"
+            "Use </weaponinfo:1251458297584947280> to see more info about the weapons"
         )
     }
 
@@ -331,7 +361,7 @@ def message_baro_mods(timestamp: datetime.datetime):
         'embed': __get_embed_baro(
             timestamp,
             Warframe.getMods(),
-            "Use </mod:1246447002833780766> to see more info about the mods"
+            "Use </mod:1251458297781817408> to see more info about the mods"
         )
     }
 
@@ -385,7 +415,7 @@ def message_mod(mod: str, timestamp: datetime.datetime):
         'embed': embed
     }
 
-def message_word_timers(timestamp: datetime.datetime):
+def message_world_timers(timestamp: datetime.datetime):
     embed = discord.Embed(
         title="World Timers",
         color=discord.Color.blue(),

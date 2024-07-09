@@ -30,6 +30,10 @@ class WarframeDB:
         return result
     
     @staticmethod
+    def get_list_from_filter_number(filter: int) -> List[int]:
+        return [index for index, power in enumerate(INDEXES) if filter & power]
+    
+    @staticmethod
     @create_cursor
     def create_tables(cursor):
         cursor.execute("CREATE TABLE IF NOT EXISTS SUBRELIQ (id INT AUTO_INCREMENT PRIMARY KEY, discordId BIGINT UNSIGNED, filters BIGINT UNSIGNED ZEROFILL, time BIGINT UNSIGNED)")
