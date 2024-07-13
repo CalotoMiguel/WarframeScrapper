@@ -36,7 +36,7 @@ class WarframeDB:
     @staticmethod
     @create_cursor
     def create_tables(cursor):
-        cursor.execute("CREATE TABLE IF NOT EXISTS SUBRELIQ (id INT AUTO_INCREMENT PRIMARY KEY, discordId BIGINT UNSIGNED, filters BIGINT UNSIGNED ZEROFILL, time BIGINT UNSIGNED)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS SUBRELIQ (id INT AUTO_INCREMENT PRIMARY KEY, discordId BIGINT UNSIGNED, filters BIGINT UNSIGNED ZEROFILL)")
         cursor.execute("CREATE TABLE IF NOT EXISTS UNIQUENAMES (uniqueName varchar(255) PRIMARY KEY, name varchar(255))")
         cursor.execute("CREATE TABLE IF NOT EXISTS ENDPOINTS (endpoint varchar(255) PRIMARY KEY, location varchar(255))")
         cursor.execute("CREATE TABLE IF NOT EXISTS MANIFEST (uniqueName varchar(255) PRIMARY KEY, location varchar(255))")
@@ -87,7 +87,7 @@ class WarframeDB:
     @staticmethod
     @create_cursor
     def get_reliq_by_filter(filter: int, cursor):
-        cursor.execute(f"SELECT id, discordId FROM SUBRELIQ WHERE (filters & {filter}) = {filter}")
+        cursor.execute(f"SELECT MIN(id), discordId FROM SUBRELIQ WHERE (filters & {filter}) = {filter} GROUP BY discordId")
         return cursor.fetchall()
 
     @staticmethod
@@ -95,17 +95,6 @@ class WarframeDB:
     def get_reliq_by_user_filter(discordId: int, filter: int, cursor):
         cursor.execute(f"SELECT id, discordId FROM SUBRELIQ WHERE discordId = {discordId} AND (filters & {filter}) = {filter}")
         return cursor.fetchall()
-
-    @staticmethod
-    @create_cursor
-    def get_reliq_by_filter_time(filter: int, time: int, cursor):
-        cursor.execute(f"SELECT id, discordId FROM SUBRELIQ WHERE (filters & {filter}) = {filter} AND time < {time}")
-        return cursor.fetchall()
-    
-    @staticmethod
-    @create_cursor
-    def update_time_by_id(id: int, time: int, cursor):
-        cursor.execute("UPDATE SUBRELIQ SET time = %s WHERE id = %s", (time, id))
 
     @staticmethod
     @create_cursor
@@ -132,6 +121,6 @@ class WarframeDB:
     @staticmethod
     @create_cursor
     def insert_reliq(userId: int, filter: int, cursor):
-        cursor.execute("INSERT INTO SUBRELIQ (discordId, filters, time) VALUES (%s, %s, 0)", (userId, filter))
+        cursor.execute("INSERT INTO SUBRELIQ (discordId, filters) VALUES (%s, %s)", (userId, filter))
 
 WarframeDB.create_tables()

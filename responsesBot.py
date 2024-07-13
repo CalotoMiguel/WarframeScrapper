@@ -40,7 +40,7 @@ def message_weapon_info(weapon: str, timestamp: datetime.datetime, edit: bool = 
     file = discord.File(Warframe.getImage(weaponinfo["uniqueName"]), filename='weapon.png')
     embed = discord.Embed(
         title=weaponinfo["name"],
-        description=weaponinfo["description"],
+        description=DamageTypes.replaceWithEmoji(weaponinfo["description"]),
         color=discord.Color.blue(),
         timestamp=timestamp)
     embed.set_thumbnail(url='attachment://weapon.png')
@@ -166,9 +166,9 @@ def message_riven_calculator(
                 if "reverseValueSymbol" in stats[name]:
                     val *= -1
                 aux = str.replace(stats[name]["locTag"], "|STAT1|", "|val|")
-                aux = str.replace(aux, "|val|%", f"({val * 90:.1f} {val * 110:.1f})")
-                aux = str.replace(aux, "|val| Damage to", f"(x{1 + val * 0.9:.2f} x{1 + val * 1.1:.2f}) Damage to")
-                aux = str.replace(aux, "|val|", f"({val * 0.9:.1f} {val * 1.1:.1f})")
+                aux = str.replace(aux, "|val|%", f"({val * 90:.1f} to {val * 110:.1f})")
+                aux = str.replace(aux, "|val| Damage to", f"(x{1 + val * 0.9:.2f} to x{1 + val * 1.1:.2f}) Damage to")
+                aux = str.replace(aux, "|val|", f"({val * 0.9:.1f} to {val * 1.1:.1f})")
                 text += aux + "\n"
         
         embed.add_field(name="Bonuses", value=DamageTypes.replaceWithEmoji(text))
@@ -180,9 +180,9 @@ def message_riven_calculator(
                     if "reverseValueSymbol" in stats[name]:
                         val *= -1
                     aux = str.replace(stats[name]["locTag"], "|STAT1|", "|val|")
-                    aux = str.replace(aux, "|val|%", f"({val * 110:.1f} {val * 90:.1f})")
-                    aux = str.replace(aux, "|val| Damage to", f"(x{1 + val * 1.1:.2f} x{1 + val * 0.9:.2f}) Damage to")
-                    aux = str.replace(aux, "|val|", f"({val * 1.1:.1f} {val * 0.9:.1f})")
+                    aux = str.replace(aux, "|val|%", f"({val * 110:.1f} to {val * 90:.1f})")
+                    aux = str.replace(aux, "|val| Damage to", f"(x{1 + val * 1.1:.2f} to x{1 + val * 0.9:.2f}) Damage to")
+                    aux = str.replace(aux, "|val|", f"({val * 1.1:.1f} to {val * 0.9:.1f})")
                     text += aux + "\n"
 
             embed.add_field(name="Curses", value=DamageTypes.replaceWithEmoji(text))

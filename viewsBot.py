@@ -173,7 +173,7 @@ class RivensView(WeaponView):
         await interaction.response.defer()
 
     riven_lvl_options=[
-                discord.SelectOption(label=num, value=num, default=(num == 8)) for num in range(0,9)
+                discord.SelectOption(label=str(num), value=str(num), default=(num == 8)) for num in range(0,9)
             ]
     @discord.ui.select(custom_id="riven-lvl-button", row=1, options=riven_lvl_options)
     async def riven_lvl_select(self, interaction: discord.Interaction, select: discord.ui.Select):

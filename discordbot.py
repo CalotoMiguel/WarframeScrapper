@@ -31,6 +31,7 @@ class MyClient(discord.Client):
         self.weapons = Warframe.getWeaponNames()
         self.mods = Warframe.getModNames()
         WarframeDB.refresh_unique_names(Warframe.getWeapons(), Warframe.getResources())
+        self.lastFisure = 0
 
     async def setup_hook(self):
         self.add_view(WeaponView())
@@ -51,23 +52,25 @@ class MyClient(discord.Client):
     
     @tasks.loop(seconds=10)
     async def check_fisures(self):
-        for fisure in sorted(Warframe.getFisures(), key=lambda x: x["Expiry"], reverse=True):
-            for (subId, userId) in WarframeDB.get_reliq_by_filter_time(
+        update = False
+        for fisure in sorted(filter(lambda x: x["Activation"] > self.lastFisure, Warframe.getFisures()), key=lambda x: x["Activation"]):
+            update = True
+            for (subId, userId) in WarframeDB.get_reliq_by_filter(
                 ConverterDB.convert_to_dbfilter(
                     [fisure["Modifier"]],
                     [fisure["faction"]],
                     [fisure["MissionType"]],
                     [str(fisure["Hard"])]
-                ),
-                fisure["Expiry"]
+                )
             ):
-                WarframeDB.update_time_by_id(subId, fisure["Expiry"])
                 message = responsesBot.message_subscribed_fisures(
                     timestamp=datetime.datetime.now(),
                     fisure=fisure,
                     subId=subId
                 )
                 await client.get_user(int(userId)).send(**message, view=DeleteSubscriptionView())
+        if update:
+            self.lastFisure = fisure["Activation"]
     @check_fisures.before_loop
     async def before_check_fisures(self):
         await self.wait_until_ready()
